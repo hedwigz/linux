@@ -6,6 +6,7 @@
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/oom.h>
+#include <linux/ptree.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Amit Shani");
@@ -49,6 +50,7 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 
 static int __init ptree_init(void)
 {
+  
   struct prinfo pinfo;
   ptree(&pinfo, (int *)0, 849);
   printk(KERN_INFO "Hello, World! %s\n", pinfo.comm);

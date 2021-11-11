@@ -1,10 +1,10 @@
 #include <linux/prinfo.h>
 #include <asm/errno.h>
 #include <linux/kmod.h>
+#include <linux/ptree.h>
 
 DEFINE_SPINLOCK(register_lock);
 
-typedef int (*ptree_func)(struct prinfo *buf, int *nr, int pid);
 ptree_func ptree_impl;
 int register_ptree(ptree_func func)
 {

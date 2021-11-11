@@ -14,6 +14,7 @@ int register_ptree(ptree_func func)
     spin_unlock(&register_lock);
     return 0;
   }
+  spin_unlock(&register_lock);
   return -EBUSY;
 }
 

@@ -9,4 +9,4 @@ struct prinfo {
     uid_t uid;
     char comm[16];
     int level;
-}
+};

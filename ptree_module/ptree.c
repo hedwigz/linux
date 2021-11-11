@@ -29,7 +29,6 @@ void traverse_processes() {
     if (!p->parent) {
       continue;
     }
-
 	}
 	read_unlock(&tasklist_lock);
 }

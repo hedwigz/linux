@@ -50,9 +50,9 @@ struct task_struct *get_p(int pid)
 int get_childs(pid_t root_pid, int * pids, int n) {
   int i = 0;
   struct task_struct *p;
-  read_lock(&tasklist_lock);
-  for_each_process(p) {
-    // limit reached?
+  rcu_read_lock();
+  list_for_each_entry_rcu(p, &init_task.tasks, tasks) {
+    printf("The current task of the list is: %s\n.", p->comm);
     if (i >= n) {
       break;
     }
@@ -67,7 +67,25 @@ int get_childs(pid_t root_pid, int * pids, int n) {
       continue;
     }
   }
-  read_unlock(&tasklist_lock);
+  rcu_read_unlock();
+  // read_lock(&tasklist_lock);
+  // for_each_process(p) {
+  //   // limit reached?
+  //   if (i >= n) {
+  //     break;
+  //   }
+  //   // check if process has parent
+  //   if (!p->parent) {
+  //     continue;
+  //   }
+  //   // is parent our root_pid?
+  //   if (p->parent->pid == root_pid) {
+  //     pids[i] = p->pid;
+  //     ++i;
+  //     continue;
+  //   }
+  // }
+  // read_unlock(&tasklist_lock);
   // got:
   return i;
 }
@@ -78,6 +96,8 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 	int n = *nr;
 	// count how many processes we got
 	int got = 0;
+  int i = 0;
+  int root_idx = 0;
 
 	// allocate array of PIDs
 	pid_t *pids;
@@ -86,8 +106,6 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 		return -ENOMEM;
   pids[0] = pid;
 
-  int i = 0;
-  int root_idx = 0;
 	do {
     pid_t root_pid = pids[root_idx];
     printk(KERN_INFO "Looking for child processes of pid: %d\n", root_pid);
@@ -115,8 +133,9 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 
 static int __init ptree_init(void)
 {
+  int reg_err;
 	printk(KERN_INFO "Hello, World!\n");
-	int reg_err = register_ptree(&ptree);
+	reg_err = register_ptree(&ptree);
 	// struct prinfo pinfo;
 	// ptree(&pinfo, (int *)0, 849);
 	if (reg_err == 0) {

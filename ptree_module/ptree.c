@@ -24,21 +24,6 @@ void to_prinfo(struct task_struct *task, struct prinfo *pinfo)
 	// pinfo->level = task->level;
 }
 
-// void traverse_processes(int *nr, pid_t parent)
-// {
-// 	struct task_struct *p;
-// 	int pid;
-// 	read_lock(&tasklist_lock);
-// 	for_each_process (p) {
-// 		if (!p->parent) {
-// 			continue;
-// 		}
-// 		if (p->parent->pid != parent) {
-// 		}
-// 	}
-// 	read_unlock(&tasklist_lock);
-// }
-
 struct task_struct *get_p(int pid)
 {
 	if (pid == 0) {
@@ -52,7 +37,6 @@ int get_childs(pid_t root_pid, int * pids, int n) {
   struct task_struct *p;
   rcu_read_lock();
   list_for_each_entry_rcu(p, &init_task.tasks, tasks) {
-    printk(KERN_INFO "The current task of the list is: %s\n.", root_pid);
     if (i >= n) {
       break;
     }
@@ -62,6 +46,7 @@ int get_childs(pid_t root_pid, int * pids, int n) {
     }
     // is parent our root_pid?
     if (p->parent->pid == root_pid) {
+			printk(KERN_INFO "The current task appears to be a child: %d\n.", p->pid);
       pids[i] = p->pid;
       ++i;
       continue;
@@ -74,9 +59,9 @@ int get_childs(pid_t root_pid, int * pids, int n) {
 
 int ptree(struct prinfo *buf, int *nr, int pid)
 {
-  // n > 0 (syscall checks)
+	printk(KERN_INFO "entering ptree...\n");
+  // syscall already checked that nr > 0
 	int n = *nr;
-	// count how many processes we got
 	int got = 0;
   int i = 0;
   int root_idx = 0;
@@ -84,6 +69,7 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 	// allocate array of PIDs
 	pid_t *pids;
 	pids = kmalloc_array(n, sizeof(pid_t), GFP_KERNEL);
+	printk(KERN_INFO "allocated array for pids\n");
 	if (!pids)
 		return -ENOMEM;
   pids[0] = pid;
@@ -94,23 +80,12 @@ int ptree(struct prinfo *buf, int *nr, int pid)
     ++root_idx;
     ++i;
     i += get_childs(root_pid, &pids[i], n-i);
-	} while (root_idx <= i && i < n);
+		printk(KERN_INFO "root_id\n", root_pid);
+	} while (root_idx < i && i < n);
 	got = i;
-  printk(KERN_INFO "got total of %d processes:\n", got);
+  printk(KERN_INFO "got total of %d processes\n", got);
+	kfree(pids);
   return got;
-  // now I need to list the items...
-	// for (i = 0; i < got; i++) {
-
-	// }
-
-	// if (pid == 0)
-	// {
-	//   to_prinfo(&init_task, buf);
-	//   return 0;
-	// }
-	// struct task_struct *p = pid_task(find_vpid(pid), PIDTYPE_PID);
-	// to_prinfo(p, buf);
-	// return 10;
 }
 
 static int __init ptree_init(void)
@@ -118,9 +93,10 @@ static int __init ptree_init(void)
   int reg_err;
 	printk(KERN_INFO "Hello, World!\n");
 	reg_err = register_ptree(&ptree);
-	// struct prinfo pinfo;
-	// ptree(&pinfo, (int *)0, 849);
+	struct prinfo* ps;
+	int nr = 5;
 	if (reg_err == 0) {
+		ptree(ps, &nr, 1986);
 		printk(KERN_INFO "ptree func registered successfully!\n");
 	} else {
 		printk(KERN_ERR "failed to register ptree func %d\n", reg_err);

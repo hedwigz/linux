@@ -82,10 +82,6 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 		printk(KERN_INFO "root_id\n", root_pid);
 	} while (root_idx < i && i < n);
 	got = i;
-	for (i = 0; i < got; i++)
-	{
-		get_
-	}
 	
   printk(KERN_INFO "got total of %d processes\n", got);
 	kfree(pids);

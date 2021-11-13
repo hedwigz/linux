@@ -15,7 +15,7 @@ MODULE_VERSION("0.02");
 
 extern struct task_struct init_task;
 
-to_prinfo(struct task_struct *task, struct prinfo *pinfo)
+void to_prinfo(struct task_struct *task, struct prinfo *pinfo)
 {
 	memcpy(pinfo->comm, task->comm, 16);
 	pinfo->state = task->state;
@@ -92,11 +92,11 @@ int ptree(struct prinfo *buf, int *nr, int pid)
     printk(KERN_INFO "Looking for child processes of pid: %d\n", root_pid);
     ++root_idx;
     ++i;
-    i += get_childs(root_pid, &pids[i], n-i)
-	} while (root_idx <= i && i < n)
+    i += get_childs(root_pid, &pids[i], n-i);
+	} while (root_idx <= i && i < n);
 	int got = i;
   printk(KERN_INFO "got total of %d processes:\n", got);
-
+  return got;
   // now I need to list the items...
 	// for (i = 0; i < got; i++) {
 

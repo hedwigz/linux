@@ -16,41 +16,39 @@ MODULE_VERSION("0.02");
 
 extern struct task_struct init_task;
 
-void to_prinfo(struct task_struct *task, struct prinfo *pinfo)
+void to_prinfo(struct task_struct *task, struct prinfo *pinfo, int level)
 {
 	memcpy(pinfo->comm, task->comm, 16);
 	pinfo->state = task->state;
 	pinfo->pid = task->pid;
-	// pinfo->level = task->level;
+	pinfo->level = level;
+	pinfo->uid = task->audit_context->uid;
 }
 
-struct task_struct *get_p(int pid)
+struct task_struct* get_p(int pid)
 {
 	if (pid == 0) {
 		return &init_task;
 	}
-	return pid_task(find_vpid(pid), PIDTYPE_PID);
+	// we need to lock here, as documented here:
+	// https://github.com/torvalds/linux/blob/5d867ab037e58da3356b95bd1a7cb8efe3501958/include/linux/pid.h#L106
+	rcu_read_lock();
+	struct task_struct* ret = pid_task(find_vpid(pid), PIDTYPE_PID);
+	rcu_read_unlock();
+	return ret
 }
 
 int get_childs(pid_t root_pid, int * pids, int n) {
   int i = 0;
-  struct task_struct *p;
+  struct task_struct *p = get_p(root_pid);
   rcu_read_lock();
-  list_for_each_entry_rcu(p, &init_task.tasks, tasks) {
+  list_for_each_entry_rcu(p, p->tasks, tasks) {
     if (i >= n) {
       break;
     }
-    // check if process has parent
-    if (!p->parent) {
-      continue;
-    }
-    // is parent our root_pid?
-    if (p->parent->pid == root_pid) {
-			printk(KERN_INFO "The current task appears to be a child: %d\n.", p->pid);
-      pids[i] = p->pid;
-      ++i;
-      continue;
-    }
+		printk(KERN_INFO "The current task appears to be a child: %s %d\n.", p->comm, p->pid);
+		pids[i] = p->pid;
+		++i;
   }
   rcu_read_unlock();
   // got:
@@ -65,6 +63,7 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 	int got = 0;
   int i = 0;
   int root_idx = 0;
+	int level = 0;
 
 	// allocate array of PIDs
 	pid_t *pids;
@@ -83,6 +82,11 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 		printk(KERN_INFO "root_id\n", root_pid);
 	} while (root_idx < i && i < n);
 	got = i;
+	for (i = 0; i < got; i++)
+	{
+		get_
+	}
+	
   printk(KERN_INFO "got total of %d processes\n", got);
 	kfree(pids);
   return got;

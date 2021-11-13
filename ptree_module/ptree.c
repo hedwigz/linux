@@ -52,7 +52,7 @@ int get_childs(pid_t root_pid, int * pids, int n) {
   struct task_struct *p;
   rcu_read_lock();
   list_for_each_entry_rcu(p, &init_task.tasks, tasks) {
-    printf("The current task of the list is: %s\n.", p->comm);
+    printk(KERN_INFO "The current task of the list is: %s\n.", root_pid);
     if (i >= n) {
       break;
     }
@@ -68,24 +68,6 @@ int get_childs(pid_t root_pid, int * pids, int n) {
     }
   }
   rcu_read_unlock();
-  // read_lock(&tasklist_lock);
-  // for_each_process(p) {
-  //   // limit reached?
-  //   if (i >= n) {
-  //     break;
-  //   }
-  //   // check if process has parent
-  //   if (!p->parent) {
-  //     continue;
-  //   }
-  //   // is parent our root_pid?
-  //   if (p->parent->pid == root_pid) {
-  //     pids[i] = p->pid;
-  //     ++i;
-  //     continue;
-  //   }
-  // }
-  // read_unlock(&tasklist_lock);
   // got:
   return i;
 }

@@ -20,23 +20,23 @@ to_prinfo(struct task_struct *task, struct prinfo *pinfo)
 	memcpy(pinfo->comm, task->comm, 16);
 	pinfo->state = task->state;
 	pinfo->pid = task->pid;
-	pinfo->level = task->level;
+	// pinfo->level = task->level;
 }
 
-void traverse_processes(int *nr, pid_t parent)
-{
-	struct task_struct *p;
-	int pid;
-	read_lock(&tasklist_lock);
-	for_each_process (p) {
-		if (!p->parent) {
-			continue;
-		}
-		if (p->parent->pid != parent) {
-		}
-	}
-	read_unlock(&tasklist_lock);
-}
+// void traverse_processes(int *nr, pid_t parent)
+// {
+// 	struct task_struct *p;
+// 	int pid;
+// 	read_lock(&tasklist_lock);
+// 	for_each_process (p) {
+// 		if (!p->parent) {
+// 			continue;
+// 		}
+// 		if (p->parent->pid != parent) {
+// 		}
+// 	}
+// 	read_unlock(&tasklist_lock);
+// }
 
 struct task_struct *get_p(int pid)
 {
@@ -48,8 +48,9 @@ struct task_struct *get_p(int pid)
 
 int get_childs(pid_t root_pid, int * pids, int n) {
   int i = 0;
+  struct task_struct *p;
   read_lock(&tasklist_lock);
-  for_each_process (p) {
+  for_each_process(p) {
     // limit reached?
     if (i >= n) {
       break;

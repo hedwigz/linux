@@ -18,6 +18,7 @@ int register_ptree(ptree_func func)
   spin_unlock(&register_lock);
   return -EBUSY;
 }
+EXPORT_SYMBOL_GPL(register_ptree);
 
 void unregister_ptree(ptree_func func)
 {
@@ -25,6 +26,7 @@ void unregister_ptree(ptree_func func)
 	ptree_impl = NULL;
   spin_unlock(&register_lock);
 }
+EXPORT_SYMBOL_GPL(unregister_ptree);
 
 asmlinkage int sys_ptree(struct prinfo *buf, int *nr, int pid)
 {

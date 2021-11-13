@@ -6,6 +6,7 @@
 #include <linux/ptree.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>
+#include <linux/sched/signal.h>
 #include <linux/limits.h>
 
 MODULE_LICENSE("GPL");
@@ -94,7 +95,7 @@ int ptree(struct prinfo *buf, int *nr, int pid)
     ++i;
     i += get_childs(root_pid, &pids[i], n-i);
 	} while (root_idx <= i && i < n);
-	int got = i;
+	got = i;
   printk(KERN_INFO "got total of %d processes:\n", got);
   return got;
   // now I need to list the items...

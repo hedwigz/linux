@@ -1,4 +1,5 @@
 #include <linux/prinfo.h>
+#include <linux/uaccess.h>
 #include <asm/errno.h>
 #include <linux/kmod.h>
 #include <linux/ptree.h>

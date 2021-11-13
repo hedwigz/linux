@@ -3,9 +3,6 @@
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/prinfo.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/oom.h>
 #include <linux/ptree.h>
 
 MODULE_LICENSE("GPL");
@@ -20,9 +17,10 @@ to_prinfo(struct task_struct *task, struct prinfo *pinfo)
   memcpy(pinfo->comm, task->comm, 16);
   pinfo->state = task->state;
   pinfo->pid = task->pid;
+  pinfo->level = init_task->lev
 }
 
-void traverse_processes() {
+void traverse_processes(int *nr, pid_t parent) {
   struct task_struct *p;
 	int pid;
   read_lock(&tasklist_lock);
@@ -30,14 +28,14 @@ void traverse_processes() {
     if (!p->parent) {
       continue;
     }
-
+    if (p->parent->pid != parent) {
+    } 
 	}
 	read_unlock(&tasklist_lock);
 }
 
 int ptree(struct prinfo *buf, int *nr, int pid)
 {
-  struct task_struct *it = &init_task;
   if (pid == 0)
   {
     to_prinfo(&init_task, buf);
@@ -50,15 +48,22 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 
 static int __init ptree_init(void)
 {
+  printk(KERN_INFO "Hello, World!\n");
+  int reg_err = register_ptree(&ptree);
+  // struct prinfo pinfo;
+  // ptree(&pinfo, (int *)0, 849);
+  if (reg_err == 0) {
+    printk(KERN_INFO "ptree func registered successfully!\n");
+  } else {
+    printk(KERN_ERR "failed to register ptree func %d\n", reg_err);
+  }
   
-  struct prinfo pinfo;
-  ptree(&pinfo, (int *)0, 849);
-  printk(KERN_INFO "Hello, World! %s\n", pinfo.comm);
-  return 0;
+  return reg_err;
 }
 
 static void __exit ptree_exit(void)
 {
+  unregister_ptree(&ptree);
   printk(KERN_INFO "Goodbye, World!\n");
 }
 

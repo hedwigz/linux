@@ -29,7 +29,7 @@ void unregister_ptree(ptree_func func)
 asmlinkage int sys_ptree(struct prinfo *buf, int *nr, int pid)
 {
   if (!access_ok(nr, sizeof(int))) {
-    return -EFAULT
+    return -EFAULT;
   }
   if (*nr < 1) {
     return -EINVAL;

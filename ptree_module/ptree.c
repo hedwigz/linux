@@ -1,6 +1,8 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/audit.h>
+#include <linux/cred.h>
 #include <linux/sched.h>
 #include <linux/prinfo.h>
 #include <linux/ptree.h>
@@ -22,7 +24,13 @@ void to_prinfo(struct task_struct *task, struct prinfo *pinfo, int level)
 	pinfo->state = task->state;
 	pinfo->pid = task->pid;
 	pinfo->level = level;
-	pinfo->uid = task->audit_context->uid;
+	if (task->cred) {
+		pinfo->uid = task->cred->uid.val;
+	}
+	// if (task->audit_context) {
+	// 	struct audit_context * ac = task->audit_context;
+	// 	pinfo->uid = (*ac).uid;
+	// }
 }
 
 struct task_struct* get_p(int pid)
@@ -35,14 +43,15 @@ struct task_struct* get_p(int pid)
 	rcu_read_lock();
 	struct task_struct* ret = pid_task(find_vpid(pid), PIDTYPE_PID);
 	rcu_read_unlock();
-	return ret
+	return ret;
 }
 
 int get_childs(pid_t root_pid, int * pids, int n) {
   int i = 0;
-  struct task_struct *p = get_p(root_pid);
+	struct task_struct *p;
+  struct task_struct *root = get_p(root_pid);
   rcu_read_lock();
-  list_for_each_entry_rcu(p, p->tasks, tasks) {
+  list_for_each_entry_rcu(p, &((*root).tasks), tasks) {
     if (i >= n) {
       break;
     }

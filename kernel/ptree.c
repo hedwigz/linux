@@ -27,6 +27,15 @@ void unregister_ptree(ptree_func func)
 
 asmlinkage int sys_ptree(struct prinfo *buf, int *nr, int pid)
 {
+  if (!access_ok(nr, sizeof(int))) {
+    return -EFAULT
+  }
+  if (*nr < 1) {
+    return -EINVAL;
+  }
+  if (!access_ok(buf, (*nr)*sizeof(struct prinfo))) {
+    return -EFAULT;
+  }
   spin_lock(&register_lock);
   if (ptree_impl == NULL) {
     request_module("ptree");
@@ -35,7 +44,9 @@ asmlinkage int sys_ptree(struct prinfo *buf, int *nr, int pid)
     spin_unlock(&register_lock);
     return -ENOSYS;
   }
+  // struct prinfo tmp;
+  int ret = ptree_impl(buf, nr, pid);
   spin_unlock(&register_lock);
-  // TODO: handle memory copy between userspace and kernel space 
-  return ptree_impl(buf, nr, pid);
+  // copy_to_user(buf, &tmp, sizeof(tmp));
+  return 0;
 }

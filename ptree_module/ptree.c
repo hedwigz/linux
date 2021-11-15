@@ -16,6 +16,11 @@ MODULE_AUTHOR("Amit Shani");
 MODULE_DESCRIPTION("Learning how to build linux modules");
 MODULE_VERSION("0.02");
 
+struct pid_level {
+	int level;
+	pid_t pid;
+};
+
 extern struct task_struct init_task;
 
 void to_prinfo(struct task_struct *task, struct prinfo *pinfo, int level)
@@ -42,7 +47,7 @@ struct task_struct* get_p(int pid)
 	return ret;
 }
 
-int get_childs(pid_t root_pid, int * pids, int n) {
+int get_childs(pid_t root_pid, struct pid_level * pids, struct prinfo * buf, int n, int level) {
   int i = 0;
   struct task_struct *p;
   rcu_read_lock();
@@ -56,14 +61,20 @@ int get_childs(pid_t root_pid, int * pids, int n) {
     }
     // is parent our root_pid?
     if (p->parent->pid == root_pid) {
-			printk(KERN_INFO "The current task appears to be a child: %d\n.", p->pid);
-      pids[i] = p->pid;
+			struct prinfo pinfo = { 0 };
+			to_prinfo(p, &pinfo, level);
+			printk(KERN_INFO "found child: %d: %s\n", pinfo.pid, pinfo.comm);
+			memcpy(&buf[i], &pinfo, sizeof(struct prinfo));
+			// copy_to_user(&buf[i], &pinfo, sizeof(struct prinfo));
+			// printk(KERN_INFO "actual pinfo on memory: %d: %s\n.", buf[i].pid, buf[i].comm);
+			pids[i].pid = p->pid;
+			pids[i].level = level;
       ++i;
       continue;
     }
   }
   rcu_read_unlock();
-  // got:
+	printk(KERN_INFO "done looking for childs of: %d\n", root_pid);
   return i;
 }
 
@@ -78,38 +89,26 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 	int level = 0;
 
 	// allocate array of PIDs
-	pid_t *pids;
-	pids = kmalloc_array(n, sizeof(pid_t), GFP_KERNEL);
+	struct pid_level *pids;
+	pids = kmalloc_array(n, sizeof(struct pid_level), GFP_KERNEL);
 	printk(KERN_INFO "allocated array for pids\n");
 	if (!pids)
 		return -ENOMEM;
-  pids[0] = pid;
+  pids[0].pid = pid;
+
+	// insert init_task
+	struct prinfo pinfo = { 0 };
+	to_prinfo(&init_task, &pinfo, 0);
+	memcpy(buf, &pinfo, sizeof(struct prinfo));
 
 	do {
-    pid_t root_pid = pids[root_idx];
-    printk(KERN_INFO "Looking for child processes of pid: %d\n", root_pid);
+    struct pid_level root_pid = pids[root_idx];
+    printk(KERN_INFO "Looking for child processes of pid: %d\n", root_pid.pid);
     ++root_idx;
-    ++i;
-    i += get_childs(root_pid, &pids[i], n-i);
-		printk(KERN_INFO "root_id\n", root_pid);
+    i += get_childs(root_pid.pid, pids, &buf[i], n-i, root_pid.level+1);
 	} while (root_idx < i && i < n);
 	got = i;
   printk(KERN_INFO "got total of %d processes\n", got);
-
-	for (i = 0; i < got; i++)
-	{
-		printk(KERN_INFO "creating prinfo variable\n");
-		struct prinfo pinfo = { 0 };
-		printk(KERN_INFO "finding task struct of pid %d\n", pids[i]);
-		struct task_struct * task = get_p(pids[i]);
-		if (task == NULL) {
-			continue;
-		}
-		printk(KERN_INFO "converting task to prinfo\n");
-		to_prinfo(task, &pinfo, 1);
-		printk(KERN_INFO "copying to user\n");
-		copy_to_user(&pinfo, &buf[i], sizeof(struct prinfo));
-	}
 	
 	kfree(pids);
   return got;
@@ -120,10 +119,8 @@ static int __init ptree_init(void)
   int reg_err;
 	printk(KERN_INFO "Hello, World!\n");
 	reg_err = register_ptree(&ptree);
-	struct prinfo* ps;
-	int nr = 5;
 	if (reg_err == 0) {
-		ptree(ps, &nr, 1986);
+		
 		printk(KERN_INFO "ptree func registered successfully!\n");
 	} else {
 		printk(KERN_ERR "failed to register ptree func %d\n", reg_err);

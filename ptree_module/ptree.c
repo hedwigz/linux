@@ -22,7 +22,9 @@ void to_prinfo(struct task_struct *task, struct prinfo *pinfo, int level)
 	pinfo->state = task->state;
 	pinfo->pid = task->pid;
 	pinfo->level = level;
-	pinfo->uid = task->audit_context->uid;
+	if (task->cred) {
+		pinfo->uid = task->cred->uid.val;
+	}
 }
 
 struct task_struct* get_p(int pid)
@@ -40,15 +42,23 @@ struct task_struct* get_p(int pid)
 
 int get_childs(pid_t root_pid, int * pids, int n) {
   int i = 0;
-  struct task_struct *p = get_p(root_pid);
+  struct task_struct *p;
   rcu_read_lock();
-  list_for_each_entry_rcu(p, p->tasks, tasks) {
+  list_for_each_entry_rcu(p, &init_task.tasks, tasks) {
     if (i >= n) {
       break;
     }
-		printk(KERN_INFO "The current task appears to be a child: %s %d\n.", p->comm, p->pid);
-		pids[i] = p->pid;
-		++i;
+    // check if process has parent
+    if (!p->parent) {
+      continue;
+    }
+    // is parent our root_pid?
+    if (p->parent->pid == root_pid) {
+			printk(KERN_INFO "The current task appears to be a child: %d\n.", p->pid);
+      pids[i] = p->pid;
+      ++i;
+      continue;
+    }
   }
   rcu_read_unlock();
   // got:

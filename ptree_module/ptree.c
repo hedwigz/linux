@@ -101,7 +101,7 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 		struct prinfo pinfo = { 0 };
 		struct task_struct * task = get_p(pids[i]);
 		to_prinfo(task, &pinfo, 1);
-		copy_to_user(&pinfo, &buf[i], sizeof(struct prinfo))
+		copy_to_user(&pinfo, &buf[i], sizeof(struct prinfo));
 	}
 	
 	kfree(pids);

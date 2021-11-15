@@ -1,6 +1,8 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/audit.h>
+#include <linux/cred.h>
 #include <linux/sched.h>
 #include <linux/prinfo.h>
 #include <linux/ptree.h>
@@ -37,14 +39,21 @@ struct task_struct* get_p(int pid)
 	rcu_read_lock();
 	struct task_struct* ret = pid_task(find_vpid(pid), PIDTYPE_PID);
 	rcu_read_unlock();
-	return ret
+	return ret;
 }
 
 int get_childs(pid_t root_pid, int * pids, int n) {
   int i = 0;
+<<<<<<< HEAD
   struct task_struct *p;
   rcu_read_lock();
   list_for_each_entry_rcu(p, &init_task.tasks, tasks) {
+=======
+	struct task_struct *p;
+  struct task_struct *root = get_p(root_pid);
+  rcu_read_lock();
+  list_for_each_entry_rcu(p, &((*root).tasks), tasks) {
+>>>>>>> 989e5b92ae698b393a980d5385e75df7b0647a97
     if (i >= n) {
       break;
     }

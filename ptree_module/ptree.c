@@ -98,9 +98,16 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 
 	for (i = 0; i < got; i++)
 	{
+		printk(KERN_INFO "creating prinfo variable\n");
 		struct prinfo pinfo = { 0 };
+		printk(KERN_INFO "finding task struct of pid %d\n", pids[i]);
 		struct task_struct * task = get_p(pids[i]);
+		if (task == NULL) {
+			continue;
+		}
+		printk(KERN_INFO "converting task to prinfo\n");
 		to_prinfo(task, &pinfo, 1);
+		printk(KERN_INFO "copying to user\n");
 		copy_to_user(&pinfo, &buf[i], sizeof(struct prinfo));
 	}
 	

@@ -64,8 +64,8 @@ int get_childs(pid_t root_pid, struct pid_level * pids, struct prinfo * buf, int
 			struct prinfo pinfo = { 0 };
 			to_prinfo(p, &pinfo, level);
 			printk(KERN_INFO "found child: %d: %s\n", pinfo.pid, pinfo.comm);
-			memcpy(&buf[i], &pinfo, sizeof(struct prinfo));
-			// copy_to_user(&buf[i], &pinfo, sizeof(struct prinfo));
+			// memcpy(&buf[i], &pinfo, sizeof(struct prinfo));
+			copy_to_user(&buf[i], &pinfo, sizeof(struct prinfo));
 			// printk(KERN_INFO "actual pinfo on memory: %d: %s\n.", buf[i].pid, buf[i].comm);
 			pids[i].pid = p->pid;
 			pids[i].level = level;
@@ -99,7 +99,8 @@ int ptree(struct prinfo *buf, int *nr, int pid)
 	// insert init_task
 	struct prinfo pinfo = { 0 };
 	to_prinfo(&init_task, &pinfo, 0);
-	memcpy(buf, &pinfo, sizeof(struct prinfo));
+	// memcpy(buf, &pinfo, sizeof(struct prinfo));
+	copy_to_user(buf, &pinfo, sizeof(struct prinfo));
 
 	do {
     struct pid_level root_pid = pids[root_idx];
@@ -120,7 +121,6 @@ static int __init ptree_init(void)
 	printk(KERN_INFO "Hello, World!\n");
 	reg_err = register_ptree(&ptree);
 	if (reg_err == 0) {
-		
 		printk(KERN_INFO "ptree func registered successfully!\n");
 	} else {
 		printk(KERN_ERR "failed to register ptree func %d\n", reg_err);

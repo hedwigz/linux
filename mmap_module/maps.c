@@ -25,6 +25,21 @@ struct task_struct* get_self_task_struct(void) {
 	return ret;
 }
 
+// src: task_mmu.c:268
+static int is_stack(struct vm_area_struct *vma)
+{
+	return vma->vm_start <= vma->vm_mm->start_stack &&
+		vma->vm_end >= vma->vm_mm->start_stack;
+}
+
+void print_shit(struct task_struct * task) {
+	struct vm_area_struct *mmap = task->mm;
+	while (mmap != NULL) {
+		printk(KERN_INFO "vm_start: %lu, is_stack: %s\n", mmap->vm_start, is_stack(mmap) ? "true":"false");
+		mmap = mmap->vm_next;
+	}
+}
+
 static int __init maps_init(void)
 {
 	printk(KERN_INFO "Hello, World!\n");

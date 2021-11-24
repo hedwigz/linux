@@ -16,9 +16,9 @@ MODULE_AUTHOR("Amit Shani");
 MODULE_DESCRIPTION("the extended /proc/self/maps");
 MODULE_VERSION("0.01");
 
-task_struct * t get_self_task_struct() {
+struct task_struct* get_self_task_struct(void) {
 	struct task_struct* ret;
-	pid = task_pid_nr(current);
+	pid_t pid = task_pid_nr(current);
 	rcu_read_lock();
 	ret = pid_task(find_vpid(pid), PIDTYPE_PID);
 	rcu_read_unlock();

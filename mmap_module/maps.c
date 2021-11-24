@@ -33,8 +33,18 @@ static int is_stack(struct vm_area_struct *vma)
 }
 
 void print_shit(struct task_struct * task) {
-	struct vm_area_struct *mmap = task->mm;
+	struct vm_area_struct *mmap = task->mm->mmap;
 	while (mmap != NULL) {
+		if (is_stack(mmap)) {
+			struct seq_file* f = kmalloc(sizeof(struct seq_file), GFP_KERNEL);
+			char * buf = kmalloc(4096, GFP_KERNEL);
+			f->buf = buf;
+			f->size = 4096;
+			show_map_vma(f, mmap);
+			printk(KERN_INFO "%s", f.buf);
+			kfree(buf);
+			kfree(f);
+		}
 		printk(KERN_INFO "vm_start: %lu, is_stack: %s\n", mmap->vm_start, is_stack(mmap) ? "true":"false");
 		mmap = mmap->vm_next;
 	}

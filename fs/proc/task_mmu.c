@@ -1910,5 +1910,8 @@ const struct file_operations proc_pid_numa_maps_operations = {
 	.llseek		= seq_lseek,
 	.release	= proc_map_release,
 };
+EXPORT_SYMBOL(show_map_vma);
+EXPORT_SYMBOL(show_map);
+EXPORT_SYMBOL(show_vma_header_prefix);
 
 #endif /* CONFIG_NUMA */

@@ -25,6 +25,15 @@ struct task_struct* get_self_task_struct(void) {
 	return ret;
 }
 
+
+struct task_struct* get_task_struct_of_pid(pid_t pid) {
+	struct task_struct* ret;
+	rcu_read_lock();
+	ret = pid_task(find_vpid(pid), PIDTYPE_PID);
+	rcu_read_unlock();
+	return ret;
+} 
+
 // src: task_mmu.c:268
 static int is_stack(struct vm_area_struct *vma)
 {
@@ -53,7 +62,7 @@ void print_shit(struct task_struct * task) {
 static int __init maps_init(void)
 {
 	printk(KERN_INFO "Hello, World!\n");
-
+	print_shit(get_task_struct_of_pid(6626));
 	return 0;
 }
 

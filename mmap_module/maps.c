@@ -59,10 +59,47 @@ void print_shit(struct task_struct * task) {
 	}
 }
 
+static int page_flag_range(pmd_t *pmd, unsigned long addr, unsigned long end, struct mm_walk *walk) {
+	struct seq_file * f = walk->private;
+	if (!pmd_present(*pmd))
+		seq_putc('.');
+
+	page = pmd_page(*pmd);
+	return 0;
+}
+
+const int SEQ_READ_SIZE = 8192;
+static const struct mm_walk_ops page_flags_walk_ops = {
+	.pmd_entry = page_flag_range,
+};
+
+void print_extended_vma(struct task_struct * task) {
+	struct vm_area_struct *vma;
+	struct mm_struct *mm = task_struct->mm;
+	
+	struct seq_file * f = kmalloc(sizeof(struct seq_file), GFP_KERNEL);
+	char * buf = kmalloc(SEQ_READ_SIZE, GFP_KERNEL);
+	f->buf = buf;
+	f->size = SEQ_READ_SIZE;
+
+	down_read(&mm->mmap_sem);
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		show_map_vma(f, vma);
+		walk_page_vma(vma, &page_flags_walk_ops, (void *)f)
+	}
+	up_read(&mm->mmap_sem);
+
+	printk(KERN_INFO "%s", f->buf);
+	
+	kfree(buf);
+	kfree(f);
+}
+
 static int __init maps_init(void)
 {
 	printk(KERN_INFO "Hello, World!\n");
-	print_shit(get_task_struct_of_pid(6626));
+	// print_shit(get_task_struct_of_pid(6626));
+	print_extended_vma(get_task_struct_of_pid(6626));
 	return 0;
 }
 

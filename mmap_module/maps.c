@@ -17,6 +17,8 @@ MODULE_AUTHOR("Amit Shani");
 MODULE_DESCRIPTION("the extended /proc/self/maps");
 MODULE_VERSION("0.01");
 
+extern void show_map_vma(struct seq_file *m, struct vm_area_struct *vma);
+
 struct task_struct* get_self_task_struct(void) {
 	struct task_struct* ret;
 	pid_t pid = task_pid_nr(current);

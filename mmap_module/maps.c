@@ -10,6 +10,7 @@
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/limits.h>
+#include <linux/seq_file.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Amit Shani");
@@ -50,7 +51,7 @@ void print_shit(struct task_struct * task) {
 			f->buf = buf;
 			f->size = 4096;
 			show_map_vma(f, mmap);
-			printk(KERN_INFO "%s", f.buf);
+			printk(KERN_INFO "%s", f->buf);
 			kfree(buf);
 			kfree(f);
 		}

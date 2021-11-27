@@ -10,11 +10,14 @@
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/limits.h>
+#include <linux/seq_file.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Amit Shani");
 MODULE_DESCRIPTION("the extended /proc/self/maps");
 MODULE_VERSION("0.01");
+
+extern void show_map_vma(struct seq_file *m, struct vm_area_struct *vma);
 
 struct task_struct* get_self_task_struct(void) {
 	struct task_struct* ret;
@@ -50,7 +53,7 @@ void print_shit(struct task_struct * task) {
 			f->buf = buf;
 			f->size = 4096;
 			show_map_vma(f, mmap);
-			printk(KERN_INFO "%s", f.buf);
+			printk(KERN_INFO "%s", f->buf);
 			kfree(buf);
 			kfree(f);
 		}

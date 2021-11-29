@@ -70,11 +70,23 @@ static int page_flag_range(pte_t *pte, unsigned long addr, unsigned long end, st
 		seq_putc(f, '.');
 		return 0;
 	}
-	p = vm_normal_page(walk->vma, addr, pte);
-	if (p == NULL) {
-		printk(KERN_INFO "no page?!");
+	// p = vm_normal_page(walk->vma, addr, pte);
+	// if (p == NULL) {
+	// 	printk(KERN_INFO "no page?");
+	// 	return 0;
+	// }
+	pfn = pte_pfn(*pte);
+	if (!pfn_valid(pfn)) {
+		printk(KERN_INFO "pfn invalid");
 		return 0;
 	}
+
+	p = pfn_to_page(pfn);
+	if (p == NULL) {
+		printk(KERN_INFO "no page?");
+		return 0;
+	}
+
 	int ref_count = page_ref_count(p);
 	if (ref_count < 10) {
 		seq_putc(f, 48+ref_count);

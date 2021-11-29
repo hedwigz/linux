@@ -62,18 +62,18 @@ void print_shit(struct task_struct * task) {
 	}
 }
 
-static int page_flag_range(pmd_t *pmd, unsigned long addr, unsigned long end, struct mm_walk *walk) {
-	struct seq_file * f = walk->private;
-	if (!pmd_present(*pmd))
-		seq_putc('.');
-
-	page = pmd_page(*pmd);
+static int page_flag_range(pte_t *pte, unsigned long addr, unsigned long end, struct mm_walk *walk) {
+	if (pte_present(pte)) {
+		printk(KERN_INFO "pte present\n");
+	} else {
+		printk(KERN_INFO "pte present\n");
+	}
 	return 0;
 }
 
 const int SEQ_READ_SIZE = 8192;
 static const struct mm_walk_ops page_flags_walk_ops = {
-	.pmd_entry = page_flag_range,
+	.pte_entry = page_flag_range,
 };
 
 void print_extended_vma(struct task_struct * task) {

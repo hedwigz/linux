@@ -8,13 +8,14 @@
 #include <linux/cred.h>
 #include <linux/sched.h>
 #include <linux/prinfo.h>
-#include <linux/ptree.h>
 #include <linux/slab.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/limits.h>
 #include <linux/pagewalk.h>
 #include <linux/seq_file.h>
+
+extern void show_map_vma(struct seq_file *m, struct vm_area_struct *vma);
 
 struct task_struct* get_self_task_struct(void) {
 	struct task_struct* ret;
@@ -58,7 +59,7 @@ static const struct mm_walk_ops page_flags_walk_ops = {
 	.pte_entry = page_flag_range,
 };
 
-size_t print_extended_vma(struct task_struct * task, unsigned long start, unsigned long end, char __user *buf, size_t size) {
+size_t print_extended_vma(struct task_struct * task, unsigned long start, unsigned long end, char __user *user_buf, size_t size) {
 	struct vm_area_struct *vma;
 	struct mm_struct *mm = task->mm;
 	
@@ -80,7 +81,7 @@ size_t print_extended_vma(struct task_struct * task, unsigned long start, unsign
 	}
 	up_read(&mm->mmap_sem);
 
-  copy_to_user(buf, f->buf, f->count);
+  copy_to_user(user_buf, f->buf, f->count);
 	
 	kfree(buf);
 	kfree(f);
@@ -96,6 +97,6 @@ asmlinkage int sys_mapspages(unsigned long start, unsigned long end, char __user
   if (!access_ok(buf, size)) {
     return -EFAULT;
   }
-  struct task_struct t = get_self_task_struct();
+  struct task_struct * t = get_self_task_struct();
   return print_extended_vma(t, start, end, buf, size);
 }

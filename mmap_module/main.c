@@ -1,5 +1,4 @@
 #include <sys/types.h>
-#include <linux/prinfo.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -14,8 +13,7 @@ int main(int argc, char *argv[])
   char * buf = malloc(size);
   // sys_mapspages(unsigned long start, unsigned long end, char __user *buf, size_t size)
   int got = syscall(450, 0, INT_MAX, buf, size);
+  printf("got: %d", got);
   // int got = ptree(ps, &nr, 0);
-  for (i = 0; i< got; i++) {
-    printf("%s\n", buf);
-  }
+  printf("%s\n", buf);
 }

@@ -64,10 +64,22 @@ void print_shit(struct task_struct * task) {
 }
 
 static int page_flag_range(pte_t *pte, unsigned long addr, unsigned long end, struct mm_walk *walk) {
-	if (pte_present(*pte)) {
-		printk(KERN_INFO "pte present\n");
+	struct seq_file * f = walk->private;
+	struct page * p;
+	if (!pte_present(*pte)) {
+		seq_putc(f, '.');
+		return 0;
+	}
+	p = vm_normal_page(walk->vma, addr, pte);
+	if (p == NULL) {
+		printk(KERN_INFO "no page?!");
+		return 0;
+	}
+	int ref_count = page_ref_count(p);
+	if (ref_count < 10) {
+		seq_putc(f, 48+ref_count);
 	} else {
-		printk(KERN_INFO "pte present\n");
+		seq_putc(f, 'x');
 	}
 	return 0;
 }
@@ -89,7 +101,9 @@ void print_extended_vma(struct task_struct * task) {
 	down_read(&mm->mmap_sem);
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
 		show_map_vma(f, vma);
+		m->count--; // remove newline char
 		walk_page_vma(vma, &page_flags_walk_ops, (void *)f);
+		seq_putc(f, '\n');
 	}
 	up_read(&mm->mmap_sem);
 

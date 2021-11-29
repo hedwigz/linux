@@ -58,7 +58,7 @@ static const struct mm_walk_ops page_flags_walk_ops = {
 	.pte_entry = page_flag_range,
 };
 
-size_t print_extended_vma(struct task_struct * task, char __user *buf, size_t size) {
+size_t print_extended_vma(struct task_struct * task, unsigned long start, unsigned long end, char __user *buf, size_t size) {
 	struct vm_area_struct *vma;
 	struct mm_struct *mm = task->mm;
 	
@@ -69,6 +69,9 @@ size_t print_extended_vma(struct task_struct * task, char __user *buf, size_t si
 
 	down_read(&mm->mmap_sem);
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+    if (!(vma->vm_start >= start && vma->vm_end < end)) {
+      continue;
+    }
 		show_map_vma(f, vma);
     if (f->count > 0 && f->count < size) // make sure we are in bounds and we don't override the last char
 		  f->buf[f->count-1] = ' '; // replace newline with whitespace
@@ -85,7 +88,7 @@ size_t print_extended_vma(struct task_struct * task, char __user *buf, size_t si
 }
 
 
-asmlinkage int mapspages(unsigned long start, unsigned long end, char __user *buf, size_t size)
+asmlinkage int sys_mapspages(unsigned long start, unsigned long end, char __user *buf, size_t size)
 {
   if (start > end) {
     return -EINVAL;
@@ -94,5 +97,5 @@ asmlinkage int mapspages(unsigned long start, unsigned long end, char __user *bu
     return -EFAULT;
   }
   struct task_struct t = get_self_task_struct();
-  return print_extended_vma(t, buf, size);
+  return print_extended_vma(t, start, end, buf, size);
 }

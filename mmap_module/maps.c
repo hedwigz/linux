@@ -39,53 +39,24 @@ struct task_struct* get_task_struct_of_pid(pid_t pid) {
 	return ret;
 } 
 
-// src: task_mmu.c:268
-static int is_stack(struct vm_area_struct *vma)
-{
-	return vma->vm_start <= vma->vm_mm->start_stack &&
-		vma->vm_end >= vma->vm_mm->start_stack;
-}
-
-void print_shit(struct task_struct * task) {
-	struct vm_area_struct *mmap = task->mm->mmap;
-	while (mmap != NULL) {
-		if (is_stack(mmap)) {
-			struct seq_file* f = kmalloc(sizeof(struct seq_file), GFP_KERNEL);
-			char * buf = kmalloc(4096, GFP_KERNEL);
-			f->buf = buf;
-			f->size = 4096;
-			show_map_vma(f, mmap);
-			printk(KERN_INFO "%s", f->buf);
-			kfree(buf);
-			kfree(f);
-		}
-		printk(KERN_INFO "vm_start: %lu, is_stack: %s\n", mmap->vm_start, is_stack(mmap) ? "true":"false");
-		mmap = mmap->vm_next;
-	}
-}
-
 static int page_flag_range(pte_t *pte, unsigned long addr, unsigned long end, struct mm_walk *walk) {
 	struct seq_file * f = walk->private;
 	struct page * p;
 	int ref_count;
+	long unsigned int pfn;
 	if (!pte_present(*pte)) {
 		seq_putc(f, '.');
 		return 0;
 	}
-	// p = vm_normal_page(walk->vma, addr, pte);
-	// if (p == NULL) {
-	// 	printk(KERN_INFO "no page?");
-	// 	return 0;
-	// }
 	pfn = pte_pfn(*pte);
 	if (!pfn_valid(pfn)) {
-		printk(KERN_INFO "pfn invalid");
+		printk(KERN_INFO "pfn invalid\n");
 		return 0;
 	}
 
 	p = pfn_to_page(pfn);
 	if (p == NULL) {
-		printk(KERN_INFO "no page?");
+		printk(KERN_INFO "no page?\n");
 		return 0;
 	}
 	ref_count = page_ref_count(p);
@@ -114,7 +85,7 @@ void print_extended_vma(struct task_struct * task) {
 	down_read(&mm->mmap_sem);
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
 		show_map_vma(f, vma);
-		f->count--; // remove newline char
+		f->buf[f->count-1] = ' '; // replace newline with whitespace
 		walk_page_vma(vma, &page_flags_walk_ops, (void *)f);
 		seq_putc(f, '\n');
 	}
@@ -129,8 +100,7 @@ void print_extended_vma(struct task_struct * task) {
 static int __init maps_init(void)
 {
 	printk(KERN_INFO "Hello, World!\n");
-	// print_shit(get_task_struct_of_pid(6626));
-	print_extended_vma(get_task_struct_of_pid(6626));
+	print_extended_vma(get_task_struct_of_pid(1471));
 	return 0;
 }
 

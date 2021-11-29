@@ -10,6 +10,7 @@
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/limits.h>
+#include <linux/pagewalk.h>
 #include <linux/seq_file.h>
 
 MODULE_LICENSE("GPL");
@@ -63,7 +64,7 @@ void print_shit(struct task_struct * task) {
 }
 
 static int page_flag_range(pte_t *pte, unsigned long addr, unsigned long end, struct mm_walk *walk) {
-	if (pte_present(pte)) {
+	if (pte_present(*pte)) {
 		printk(KERN_INFO "pte present\n");
 	} else {
 		printk(KERN_INFO "pte present\n");
@@ -78,7 +79,7 @@ static const struct mm_walk_ops page_flags_walk_ops = {
 
 void print_extended_vma(struct task_struct * task) {
 	struct vm_area_struct *vma;
-	struct mm_struct *mm = task_struct->mm;
+	struct mm_struct *mm = task->mm;
 	
 	struct seq_file * f = kmalloc(sizeof(struct seq_file), GFP_KERNEL);
 	char * buf = kmalloc(SEQ_READ_SIZE, GFP_KERNEL);
@@ -88,7 +89,7 @@ void print_extended_vma(struct task_struct * task) {
 	down_read(&mm->mmap_sem);
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
 		show_map_vma(f, vma);
-		walk_page_vma(vma, &page_flags_walk_ops, (void *)f)
+		walk_page_vma(vma, &page_flags_walk_ops, (void *)f);
 	}
 	up_read(&mm->mmap_sem);
 

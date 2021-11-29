@@ -60,6 +60,7 @@ static const struct mm_walk_ops page_flags_walk_ops = {
 };
 
 size_t print_extended_vma(struct task_struct * task, unsigned long start, unsigned long end, char __user *user_buf, size_t size) {
+  printk(KERN_INFO "print_extended_vma called\n");
 	struct vm_area_struct *vma;
 	struct mm_struct *mm = task->mm;
 	
@@ -68,6 +69,7 @@ size_t print_extended_vma(struct task_struct * task, unsigned long start, unsign
 	f->buf = buf;
 	f->size = size;
 
+  printk(KERN_INFO "about to lock for mmap of struct\n");
 	down_read(&mm->mmap_sem);
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
     if (!(vma->vm_start >= start && vma->vm_end < end)) {
@@ -91,12 +93,12 @@ size_t print_extended_vma(struct task_struct * task, unsigned long start, unsign
 
 asmlinkage int sys_mapspages(unsigned long start, unsigned long end, char __user *buf, size_t size)
 {
+  printk(KERN_INFO "sys_mapspages called! start: %d end: %d size: %d\n", start, end, size);
   if (start > end) {
     return -EINVAL;
   }
   if (!access_ok(buf, size)) {
     return -EFAULT;
   }
-  struct task_struct * t = get_self_task_struct();
-  return print_extended_vma(t, start, end, buf, size);
+  return print_extended_vma(current, start, end, buf, size);
 }
